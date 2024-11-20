@@ -1,0 +1,24 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-lg-4">
+                <div class="box-element category">
+                    {% if category.imageURL %}
+                        <img class="thumbnail category-image" src="{{ category.imageURL }}" alt="{{ category.name }}">
+                    {% else %}
+                        <img class="thumbnail category-image" src="{% static 'images/placeholder.png' %}">
+                    {% endif %}
+                    
+                    <h6><strong>{{ category.name }}</strong></h6>
+                    <hr>
+                    <p>{{ category.product_count }} productos</p>
+                    <hr>
+                    <a class="btn btn-outline-success" href="#">Ver categoría</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock content %}
+
