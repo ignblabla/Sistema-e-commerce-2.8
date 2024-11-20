@@ -44,7 +44,6 @@ def checkout(request):
 		items = order.orderitem_set.all()
 		cartItems = order.get_cart_items
 	else:
-		#Create empty cart for now for non-logged in user
 		items = []
 		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
 		cartItems = order['get_cart_items']
@@ -104,3 +103,29 @@ def processOrder(request):
 		print('User is not logged in')
 
 	return JsonResponse('Payment submitted..', safe=False)
+
+
+
+# def categories(request):
+#     if request.user.is_authenticated:
+#         customer = request.user.customer
+#         order, created = Order.objects.get_or_create(customer=customer, complete=False)
+#         cartItems = order.get_cart_items
+#     else:
+#         cartItems = 0
+
+#     categories = Category.objects.all()
+
+#     context = {'categories': categories, 'cartItems': cartItems}
+#     return render(request, 'store/categories.html', context)
+
+def categories(request):
+    # Obtener todas las categorías
+    categories = Category.objects.all()
+    
+    # Obtener la cantidad de productos en cada categoría (opcional)
+    for category in categories:
+        category.product_count = category.product_set.count()
+
+    context = {'categories': categories}
+    return render(request, 'store/categories.html', context)
