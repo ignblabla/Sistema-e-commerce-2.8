@@ -26,12 +26,19 @@ class Category(models.Model):
             url = ''
         return url
 
+class Manufacturer(models.Model):
+    name = models.CharField(max_length=200)
+    
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
 	name = models.CharField(max_length=200)
 	price = models.FloatField()
-	digital = models.BooleanField(default=False,null=True, blank=True)
 	image = models.ImageField(null=True, blank=True)
 	category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+	manufacturer = models.ForeignKey(Manufacturer, on_delete=models.SET_NULL, null=True, blank=True)
 
 	def __str__(self):
 		return self.name
@@ -58,8 +65,7 @@ class Order(models.Model):
 		shipping = False
 		orderitems = self.orderitem_set.all()
 		for i in orderitems:
-			if i.product.digital == False:
-				shipping = True
+			shipping = True
 		return shipping
 
 	@property

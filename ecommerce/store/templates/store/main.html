@@ -44,12 +44,17 @@
 	  <div class="collapse navbar-collapse" id="navbarSupportedContent">
 	    <ul class="navbar-nav mr-auto">
 	      <li class="nav-item active">
-	        <a class="nav-link" href="{% url 'store' %}">Store <span class="sr-only">(current)</span></a>
+	        <a class="nav-link" href="{% url 'categories' %}">Categorías <span class="sr-only">(current)</span></a>
 	      </li>
+
+		  <form class="form-inline" method="GET" action="{% url 'search_products' %}">
+			<input class="form-control mr-sm-2" type="search" placeholder="Buscar productos" aria-label="Buscar" name="q">
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
+		  </form>
 	 
 	    </ul>
 	    <div class="form-inline my-2 my-lg-0">
-	     	<a href="#"class="btn btn-warning">Login</a>
+	     	<a href="#"class="btn btn-warning">Iniciar Sesión</a>
 	     	
 	     	<a href="{% url 'cart' %}">
 	    		<img  id="cart-icon" src="{% static 'images/cart.png' %}">
