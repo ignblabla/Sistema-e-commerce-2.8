@@ -1,18 +1,107 @@
 {% extends 'store/main.html' %}
 {% load static %}
 {% block content %}
-    <div class="row">
-        {% for product in products %}
-            <div class="col-lg-4">
-                <img class="thumbnail" src="{{product.imageURL}}">
-                <div class="box-element product">
-                    <h6><strong>{{product.name}}</strong></h6>
-                    <hr>
-                    <button data-product={{product.id}} data-action="add" class="btn btn-outline-secondary add-btn update-cart">Añadir</button>
-                    <a class="btn btn-outline-success" href="#">Ver</a>
-                    <h4 style="display: inline-block; float: right"><strong>{{product.price}}€</strong></h4>
+
+<style>
+    .hero {
+        background-image: url({% static 'images/Portada.jpg' %});
+        background-size: cover;
+        background-position: center;
+        height: 500px;
+        color: black; /* Cambiado a negro */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .hero h1 {
+        font-size: 4rem;
+        font-weight: bold; /* Negrita */
+        text-shadow: -1px -1px 0 white, 1px -1px 0 white, -1px 1px 0 white, 1px 1px 0 white; /* Borde blanco */
+    }
+    .categories img {
+        transition: transform 0.3s ease;
+    }
+    .categories img:hover {
+        transform: scale(1.05);
+    }
+    .product-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-10px);
+    }
+</style>
+
+<div class="hero">
+    <div>
+        <h1>Bienvenidos a Ecom</h1>
+    </div>
+</div>
+
+<div class="container my-5">
+    <h2 class="text-center mb-4">Categorías Populares</h2>
+    <div class="row categories text-center">
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 10 %}">
+                <img src="{% static 'images/frigorifico.jpg' %}" alt="Frigoríficos" class="img-fluid rounded">
+                <h5 class="mt-2">Frigoríficos</h5>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 11 %}">
+                <img src="{% static 'images/Lavadora.jpg' %}" alt="Lavadoras" class="img-fluid rounded">
+                <h5 class="mt-2">Lavadoras</h5>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 14 %}">
+                <img src="{% static 'images/Hornos.jpg' %}" alt="Hornos" class="img-fluid rounded">
+                <h5 class="mt-2">Hornos</h5>
+            </a>
+        </div>
+    </div>
+</div>
+
+
+
+    <!-- Productos -->
+    <div id="products" class="container my-5">
+        <h2 class="text-center mb-4">Productos Destacados</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card product-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Frigorífico americano - Samsung Family Hub</h5>
+                        <p class="card-text">Precio: 1321,49€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 7 %}">Ver detalles</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card product-card">
+                    <div class="card-body">
+                        <h5 class="card-title">TV LED 55" - LG</h5>
+                        <p class="card-text">Precio: 391,74€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 10 %}">Ver detalles</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card product-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Frigorífico combi - Bosh</h5>
+                        <p class="card-text">Precio: 585,95€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 9 %}">Ver detalles</a>
+                    </div>
+                </div>
             </div>
         </div>
-        {% endfor %}
     </div>
+
+    <!-- Pie de página -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p>© 2024 EDB. Todos los derechos reservados.</p>
+    </footer>
 {% endblock content %}

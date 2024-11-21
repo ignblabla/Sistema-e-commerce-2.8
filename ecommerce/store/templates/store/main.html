@@ -19,7 +19,6 @@
 		        var cookies = document.cookie.split(';');
 		        for (var i = 0; i < cookies.length; i++) {
 		            var cookie = cookies[i].trim();
-		            // Does this cookie string begin with the name we want?
 		            if (cookie.substring(0, name.length + 1) === (name + '=')) {
 		                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
 		                break;
@@ -36,7 +35,7 @@
 <body>
 
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-	  <a class="navbar-brand" href="{% url 'store' %}">Ecom</a>
+	  <a class="navbar-brand" href="{% url 'store' %}">EDB</a>
 	  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 	    <span class="navbar-toggler-icon"></span>
 	  </button>
@@ -44,23 +43,41 @@
 	  <div class="collapse navbar-collapse" id="navbarSupportedContent">
 	    <ul class="navbar-nav mr-auto">
 	      <li class="nav-item active">
-	        <a class="nav-link" href="{% url 'store' %}">Store <span class="sr-only">(current)</span></a>
+	        <a class="nav-link" href="{% url 'categories' %}">Categorías <span class="sr-only">(current)</span></a>
 	      </li>
+		  
+		  <form class="form-inline" method="GET" action="{% url 'search_products' %}">
+			<input class="form-control mr-sm-2" type="search" placeholder="Buscar productos" aria-label="Buscar" name="q" >
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit" style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px;">Buscar</button>
+		  </form>
 	 
 	    </ul>
 	    <div class="form-inline my-2 my-lg-0">
 			{% if user.is_authenticated %}
+			<a href="/orders" class="btn btn-outline-success my-2 my-sm-0" 
+       			style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px; margin: 10px 10px;">
+        		Mis pedidos
+    		</a>
+
 			<form method="POST" action="{% url 'logout' %}" style="display: inline;">
 				{% csrf_token %}
-				<button type="submit" class="btn btn-link" style="color: inherit; text-decoration: none;">Cerrar sesión</button>
+				<button type="submit" class="btn btn-outline-success my-2 my-sm-0" type="submit" style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px;";">Cerrar sesión</button>
 			</form>
 			{% else %}
-			<li>
-				<a href="{% url 'login' %}">Iniciar sesión</a>
+			<li style="list-style: none;">
+				<div class="form-container" style="border: 2px solid #add8e6; padding: 10px; border-radius: 8px; background-color: #f0f8ff; width: 300px; margin: 0 auto;">
+					<form id="myForm" class="d-flex align-items-center">
+						<input type="number" class="form-control mr-2" placeholder="Id del pedido" id="orderInput" name="orderInput" required style="width: 70%;">
+						<button type="button" style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px;" onclick="redirigir()">Buscar</button>
+					</form>
+				</div>
+			</li>
+			<li style="list-style: none;">
+				<a class="btn btn-outline-success my-2 my-sm-0" type="submit" style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px;  margin: 10px 10px;" href="{% url 'login' %}">Iniciar sesión</a>
 			</li>
 
-			<li>
-				<a href="{% url 'registro' %}">Registrarse</a>
+			<li style="list-style: none;">
+				<a class="btn btn-outline-success my-2 my-sm-0" type="submit" style="background-color: #001f3f; color: white; border: 1px solid #001f3f; border-radius: 5px;  margin: 10px 10px;"  href="{% url 'registro' %}">Registrarse</a>
 			</li>
 			{% endif %}
 	     	
@@ -73,14 +90,11 @@
 	  </div>
 	</nav>
 
-     <div class="container">
-            <br>
-            {% block content %}
-
-
-            {% endblock content %}
-         </div>
-
+    <div class="container">
+        <br>
+        {% block content %}
+        {% endblock content %}
+    </div>
 
 	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 
@@ -89,5 +103,33 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
 	<script type="text/javascript" src="{% static 'js/cart.js' %}"></script>
+
+	<script>
+        function redirigir() {
+            // Obtener el valor del campo de entrada
+            const orderId = document.getElementById('orderInput').value;
+            
+            // Verificar si el valor es un número entero
+            if (isNaN(orderId) || parseInt(orderId) !== +orderId) {
+                alert('Por favor, introduce un ID de orden válido.');
+            } else {
+                fetch(`/order/${orderId}/check/`)  
+                    .then(response => {
+                        if (response.ok) {
+                            // Si la respuesta es OK, redirigir al usuario
+                            const url = `http://127.0.0.1:8000/order/${orderId}/`;
+                            window.location.href = url;
+                        } else {
+                            // Si no existe, mostrar un mensaje de error
+                            alert('La orden no existe. Por favor, verifica el ID.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al verificar la orden:', error);
+                        alert('Hubo un error al verificar el ID de la orden.');
+                    });
+            }
+        }
+    </script>
 </body>
 </html>

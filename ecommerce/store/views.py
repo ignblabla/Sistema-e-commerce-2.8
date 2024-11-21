@@ -1,5 +1,5 @@
 from pyexpat.errors import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 import json
 import datetime
@@ -7,16 +7,15 @@ from .models import *
 from .forms import CustomUserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 def store(request):
-
 	if request.user.is_authenticated:
 		customer = request.user
 		order, created = Order.objects.get_or_create(user=customer, complete=False)
 		items = order.orderitem_set.all()
 		cartItems = order.get_cart_items
 	else:
-		#Create empty cart for now for non-logged in user
 		items = []
 		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
 		cartItems = order['get_cart_items']
@@ -33,7 +32,6 @@ def cart(request):
 		items = order.orderitem_set.all()
 		cartItems = order.get_cart_items
 	else:
-		#Create empty cart for now for non-logged in user
 		items = []
 		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
 		cartItems = order['get_cart_items']
@@ -56,37 +54,33 @@ def checkout(request):
 	return render(request, 'store/checkout.html', context)
 
 def updateItem(request):
-	data = json.loads(request.body)
-	productId = data['productId']
-	action = data['action']
-	print('Action:', action)
-	print('Product:', productId)
+    data = json.loads(request.body)
+    productId = data['productId']
+    action = data['action']
 
-	customer = request.user
-	product = Product.objects.get(id=productId)
-	order, created = Order.objects.get_or_create(user=customer, complete=False)
+    order, created = Order.objects.get_or_create(user=request.user, complete=False)
+    product = Product.objects.get(id=productId)
+    order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
 
-	orderItem, created = OrderItem.objects.get_or_create(order=order, product=product)
+    if action == 'add':
+        order_item.quantity += 1
+    elif action == 'remove':
+        order_item.quantity -= 1
+    order_item.save()
 
-	if action == 'add':
-		orderItem.quantity = (orderItem.quantity + 1)
-	elif action == 'remove':
-		orderItem.quantity = (orderItem.quantity - 1)
+    if order_item.quantity <= 0:
+        order_item.delete()
 
-	orderItem.save()
-
-	if orderItem.quantity <= 0:
-		orderItem.delete()
-
-	return JsonResponse('Item was added', safe=False)
+    cartItems = order.get_cart_items
+    return JsonResponse({'cartItems': cartItems}, safe=False)
 
 def processOrder(request):
 	transaction_id = datetime.datetime.now().timestamp()
 	data = json.loads(request.body)
 
 	if request.user.is_authenticated:
-		customer = request.user
-		order, created = Order.objects.get_or_create(user=customer, complete=False)
+		user = request.user
+		order, created = Order.objects.get_or_create(user=user, complete=False)
 		total = float(data['form']['total'])
 		order.transaction_id = transaction_id
 
@@ -96,7 +90,7 @@ def processOrder(request):
 
 		if order.shipping == True:
 			ShippingAddress.objects.create(
-			customer=customer,
+			user=user,
 			order=order,
 			address=data['shipping']['address'],
 			city=data['shipping']['city'],
@@ -109,10 +103,7 @@ def processOrder(request):
 	return JsonResponse('Payment submitted..', safe=False)
 
 def categories(request):
-    # Obtener todas las categorías
     categories = Category.objects.all()
-    
-    # Obtener la cantidad de productos en cada categoría (opcional)
     for category in categories:
         category.product_count = category.product_set.count()
 
@@ -133,3 +124,64 @@ def registro(request):
             return redirect(to="store")
         data["form"] = formulario
     return render(request, 'registration/registro.html', data)
+
+def products_by_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    products = category.product_set.all()
+
+    manufacturers = category.product_set.values('manufacturer__id', 'manufacturer__name').distinct()
+
+    manufacturer_id = request.GET.get('manufacturer')
+    if manufacturer_id:
+        products = products.filter(manufacturer_id=manufacturer_id)
+
+    context = {
+        'category': category,
+        'products': products,
+        'manufacturers': manufacturers,
+        'selected_manufacturer': manufacturer_id,
+    }
+    return render(request, 'store/products_by_category.html', context)
+
+def product_details(request, product_id):
+	product= get_object_or_404(Product, id=product_id)
+    
+	context = {
+        'product': product,
+    }
+
+	return render(request,'store/product_details.html', context)
+@login_required
+def list_orders(request):
+    user = request.user
+    orders = Order.objects.filter(user=user)
+    context = {
+        'orders': orders
+    }
+    return render(request, 'store/my_orders.html', context)
+
+
+
+def view_order(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return render(request, 'store/order_not_found.html', {'order_id': order_id})
+
+    order_items = order.orderitem_set.all()
+    shipping_address = ShippingAddress.objects.filter(order=order).first()
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'shipping_address': shipping_address,
+    }
+    
+    return render(request, 'store/order.html', context)
+
+def check_order_exists(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        return JsonResponse({'exists': True})
+    except Order.DoesNotExist:
+        return JsonResponse({'exists': False}, status=404)
