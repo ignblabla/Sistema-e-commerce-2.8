@@ -31,6 +31,7 @@ class Product(models.Model):
 	image = models.ImageField(null=True, blank=True)
 	category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
 	manufacturer = models.ForeignKey(Manufacturer, on_delete=models.SET_NULL, null=True, blank=True)
+	stock=models.IntegerField(null=False, blank=True, default=0)
 
 	def __str__(self):
 		return self.name
@@ -43,11 +44,21 @@ class Product(models.Model):
 			url = ''
 		return url
 
+
 class Order(models.Model):
+	STATUS_CHOICES = [
+        ('preparation', 'En preparacion'),
+        ('shipping', 'En camino'),
+        ('delivered', 'Entregado'),
+    ]
 	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 	date_ordered = models.DateTimeField(auto_now_add=True)
 	complete = models.BooleanField(default=False)
-	transaction_id = models.CharField(max_length=100, null=True)
+	status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='preparation'
+    )
 
 	def __str__(self):
 		return str(self.id)

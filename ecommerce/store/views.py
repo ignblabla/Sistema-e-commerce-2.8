@@ -7,6 +7,7 @@ from .models import *
 from .forms import CustomUserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 def store(request):
 	if request.user.is_authenticated:
@@ -170,3 +171,38 @@ def products_by_category(request, category_id):
         'selected_manufacturer': manufacturer_id,
     }
     return render(request, 'store/products_by_category.html', context)
+
+@login_required
+def list_orders(request):
+    user = request.user
+    orders = Order.objects.filter(user=user)
+    context = {
+        'orders': orders
+    }
+    return render(request, 'store/my_orders.html', context)
+
+
+
+def view_order(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return render(request, 'store/order_not_found.html', {'order_id': order_id})
+
+    order_items = order.orderitem_set.all()
+    shipping_address = ShippingAddress.objects.filter(order=order).first()
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'shipping_address': shipping_address,
+    }
+    
+    return render(request, 'store/order.html', context)
+
+def check_order_exists(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        return JsonResponse({'exists': True})
+    except Order.DoesNotExist:
+        return JsonResponse({'exists': False}, status=404)

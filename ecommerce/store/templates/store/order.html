@@ -1,0 +1,55 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+<div class="container">
+    <h1>Detalles del Pedido</h1>
+    
+    <h3>Información del Pedido</h3>
+    <p><strong>ID del Pedido:</strong> {{ order.id }}</p>
+    <p><strong>Fecha del Pedido:</strong> {{ order.date_ordered|date:"d/m/Y H:i" }}</p>
+    <p><strong>Estado:</strong> 
+        {% if order.status == "preparation" %}
+            En preparación
+        {% elif order.status == "shipping" %}
+            En camino
+        {% elif order.status == "delivered" %}
+            Entregado
+        {% else %}
+            Desconocido
+        {% endif %}
+    </p>
+    <p><strong>Total del Pedido:</strong> ${{ order.get_cart_total }}</p>
+
+    <h3>Artículos del Pedido</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order_items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.get_total }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Dirección de Envío</h3>
+    {% if shipping_address %}
+        <p><strong>Dirección:</strong> {{ shipping_address.address }}</p>
+        <p><strong>Ciudad:</strong> {{ shipping_address.city }}</p>
+        <p><strong>Estado:</strong> {{ shipping_address.state }}</p>
+        <p><strong>Código Postal:</strong> {{ shipping_address.zipcode }}</p>
+    {% else %}
+        <p>No se encontró una dirección de envío.</p>
+    {% endif %}
+</div>
+{% endblock content %}
