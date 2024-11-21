@@ -16,7 +16,6 @@ def store(request):
 		items = order.orderitem_set.all()
 		cartItems = order.get_cart_items
 	else:
-		#Create empty cart for now for non-logged in user
 		items = []
 		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
 		cartItems = order['get_cart_items']
@@ -33,7 +32,6 @@ def cart(request):
 		items = order.orderitem_set.all()
 		cartItems = order.get_cart_items
 	else:
-		#Create empty cart for now for non-logged in user
 		items = []
 		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
 		cartItems = order['get_cart_items']
@@ -55,38 +53,11 @@ def checkout(request):
 	context = {'items':items, 'order':order, 'cartItems':cartItems}
 	return render(request, 'store/checkout.html', context)
 
-# def updateItem(request):
-# 	data = json.loads(request.body)
-# 	productId = data['productId']
-# 	action = data['action']
-# 	print('Action:', action)
-# 	print('Product:', productId)
-
-# 	customer = request.user
-# 	product = Product.objects.get(id=productId)
-# 	order, created = Order.objects.get_or_create(user=customer, complete=False)
-
-# 	orderItem, created = OrderItem.objects.get_or_create(order=order, product=product)
-
-# 	if action == 'add':
-# 		orderItem.quantity = (orderItem.quantity + 1)
-# 	elif action == 'remove':
-# 		orderItem.quantity = (orderItem.quantity - 1)
-
-# 	orderItem.save()
-
-# 	if orderItem.quantity <= 0:
-# 		orderItem.delete()
-
-# 	return JsonResponse('Item was added', safe=False)
-
 def updateItem(request):
     data = json.loads(request.body)
     productId = data['productId']
     action = data['action']
 
-    # Lógica para actualizar el carrito
-    # Asumiendo que tienes un modelo llamado Order o similar
     order, created = Order.objects.get_or_create(user=request.user, complete=False)
     product = Product.objects.get(id=productId)
     order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
@@ -100,7 +71,7 @@ def updateItem(request):
     if order_item.quantity <= 0:
         order_item.delete()
 
-    cartItems = order.get_cart_items  # Método para contar los ítems en el carrito
+    cartItems = order.get_cart_items
     return JsonResponse({'cartItems': cartItems}, safe=False)
 
 def processOrder(request):
@@ -108,8 +79,8 @@ def processOrder(request):
 	data = json.loads(request.body)
 
 	if request.user.is_authenticated:
-		customer = request.user
-		order, created = Order.objects.get_or_create(user=customer, complete=False)
+		user = request.user
+		order, created = Order.objects.get_or_create(user=user, complete=False)
 		total = float(data['form']['total'])
 		order.transaction_id = transaction_id
 
@@ -119,7 +90,7 @@ def processOrder(request):
 
 		if order.shipping == True:
 			ShippingAddress.objects.create(
-			customer=customer,
+			user=user,
 			order=order,
 			address=data['shipping']['address'],
 			city=data['shipping']['city'],

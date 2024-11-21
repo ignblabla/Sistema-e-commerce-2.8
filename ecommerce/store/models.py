@@ -81,7 +81,11 @@ class Order(models.Model):
 	def get_cart_items(self):
 		orderitems = self.orderitem_set.all()
 		total = sum([item.quantity for item in orderitems])
-		return total 
+		return total
+	
+	def product_list(self):
+		return ", ".join([item.product.name for item in self.orderitem_set.all() if item.product])
+	product_list.short_description = "Products"
 
 class OrderItem(models.Model):
 	product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
@@ -100,10 +104,10 @@ class OrderItem(models.Model):
 class ShippingAddress(models.Model):
 	user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 	order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
-	address = models.CharField(max_length=200, null=False)
-	city = models.CharField(max_length=200, null=False)
-	state = models.CharField(max_length=200, null=False)
-	zipcode = models.CharField(max_length=200, null=False)
+	address = models.CharField(max_length=200, null=False, blank=False)
+	city = models.CharField(max_length=200, null=False, blank=False)
+	state = models.CharField(max_length=200, null=False, blank=False)
+	zipcode = models.CharField(max_length=200, null=False, blank=False)
 	date_added = models.DateTimeField(auto_now_add=True)
 
 	def __str__(self):
