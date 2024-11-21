@@ -1,0 +1,96 @@
+{% extends 'store/main.html' %}
+{% load static %}
+{% block content %}
+<div class="container">
+    <h1>Mis Pedidos</h1>
+    {% if orders %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Detalles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ order.date_ordered|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <div class="progress-container">
+                                <div class="progress-bar" 
+                                     style="width: {% if order.status == 'preparation' %}33{% elif order.status == 'shipping' %}66{% elif order.status == 'delivered' %}100{% else %}0{% endif %}%;"></div>
+                            </div>
+                            <span class="progress-text">
+                                {% if order.status == "preparation" %}
+                                    En preparación
+                                {% elif order.status == "shipping" %}
+                                    En camino
+                                {% elif order.status == "delivered" %}
+                                    Entregado
+                                {% else %}
+                                    Desconocido
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>${{ order.get_cart_total }}</td>
+                        <td>
+                            <a href="{% url 'order' order_id=order.id %}">Ver Pedido</a>
+                        </a>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="details-{{ order.id }}">
+                        <td colspan="5">
+                            <div class="card card-body">
+                                <h5>Artículos</h5>
+                                <ul class="list-group">
+                                    {% for item in order.orderitem_set.all %}
+                                        <li class="list-group-item">
+                                            {{ item.product.name }} - Cantidad: {{ item.quantity }} - Total: ${{ item.get_total }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No tienes pedidos en este momento.</p>
+    {% endif %}
+</div>
+
+
+<head>
+    <style>
+        .progress-container {
+            width: 100%;
+            height: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 5px;
+            border: 1px solid black; 
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #07db23;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #333;
+            display: block;
+            margin-top: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+{% endblock content %}
