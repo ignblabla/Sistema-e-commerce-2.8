@@ -1,5 +1,5 @@
 from pyexpat.errors import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 import json
 import datetime
@@ -9,7 +9,6 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 
 def store(request):
-
 	if request.user.is_authenticated:
 		customer = request.user
 		order, created = Order.objects.get_or_create(user=customer, complete=False)
@@ -109,10 +108,7 @@ def processOrder(request):
 	return JsonResponse('Payment submitted..', safe=False)
 
 def categories(request):
-    # Obtener todas las categorías
     categories = Category.objects.all()
-    
-    # Obtener la cantidad de productos en cada categoría (opcional)
     for category in categories:
         category.product_count = category.product_set.count()
 
@@ -133,3 +129,21 @@ def registro(request):
             return redirect(to="store")
         data["form"] = formulario
     return render(request, 'registration/registro.html', data)
+
+def products_by_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    products = category.product_set.all()
+
+    manufacturers = category.product_set.values('manufacturer__id', 'manufacturer__name').distinct()
+
+    manufacturer_id = request.GET.get('manufacturer')
+    if manufacturer_id:
+        products = products.filter(manufacturer_id=manufacturer_id)
+
+    context = {
+        'category': category,
+        'products': products,
+        'manufacturers': manufacturers,
+        'selected_manufacturer': manufacturer_id,
+    }
+    return render(request, 'store/products_by_category.html', context)
