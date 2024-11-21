@@ -40,24 +40,31 @@
     </div>
 </div>
 
-    <!-- Categorías Destacadas -->
-    <div class="container my-5">
-        <h2 class="text-center mb-4">Categorías Populares</h2>
-        <div class="row categories text-center">
-            <div class="col-md-4">
+<div class="container my-5">
+    <h2 class="text-center mb-4">Categorías Populares</h2>
+    <div class="row categories text-center">
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 10 %}">
                 <img src="{% static 'images/frigorifico.jpg' %}" alt="Frigoríficos" class="img-fluid rounded">
                 <h5 class="mt-2">Frigoríficos</h5>
-            </div>
-            <div class="col-md-4">
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 11 %}">
                 <img src="{% static 'images/Lavadora.jpg' %}" alt="Lavadoras" class="img-fluid rounded">
                 <h5 class="mt-2">Lavadoras</h5>
-            </div>
-            <div class="col-md-4">
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{% url 'products_by_category' 14 %}">
                 <img src="{% static 'images/Hornos.jpg' %}" alt="Hornos" class="img-fluid rounded">
                 <h5 class="mt-2">Hornos</h5>
-            </div>
+            </a>
         </div>
     </div>
+</div>
+
+
 
     <!-- Productos -->
     <div id="products" class="container my-5">
@@ -66,27 +73,27 @@
             <div class="col-md-4">
                 <div class="card product-card">
                     <div class="card-body">
-                        <h5 class="card-title">Frigorífico Samsung</h5>
-                        <p class="card-text">Precio: 699€</p>
-                        <a href="#" class="btn btn-primary">Ver Detalles</a>
+                        <h5 class="card-title">Frigorífico americano - Samsung Family Hub</h5>
+                        <p class="card-text">Precio: 1321,49€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 7 %}">Ver detalles</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card product-card">
                     <div class="card-body">
-                        <h5 class="card-title">Lavadora Bosch</h5>
-                        <p class="card-text">Precio: 499€</p>
-                        <a href="#" class="btn btn-primary">Ver Detalles</a>
+                        <h5 class="card-title">TV LED 55" - LG</h5>
+                        <p class="card-text">Precio: 391,74€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 10 %}">Ver detalles</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card product-card">
                     <div class="card-body">
-                        <h5 class="card-title">Horno Balay</h5>
-                        <p class="card-text">Precio: 483€</p>
-                        <a href="#" class="btn btn-primary">Ver Detalles</a>
+                        <h5 class="card-title">Frigorífico combi - Bosh</h5>
+                        <p class="card-text">Precio: 585,95€</p>
+                        <a class="btn btn-primary" href="{% url 'product_details' 9 %}">Ver detalles</a>
                     </div>
                 </div>
             </div>
@@ -95,6 +102,6 @@
 
     <!-- Pie de página -->
     <footer class="bg-dark text-white text-center py-3">
-        <p>© 2024 Ecom. Todos los derechos reservados.</p>
+        <p>© 2024 EDB. Todos los derechos reservados.</p>
     </footer>
 {% endblock content %}
