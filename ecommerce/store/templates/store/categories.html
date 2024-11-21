@@ -15,7 +15,7 @@
                     <hr>
                     <p>{{ category.product_count }} productos</p>
                     <hr>
-                    <a class="btn btn-outline-success" href="#">Ver categoría</a>
+                    <a class="btn btn-outline-success" href="{% url 'products_by_category' category.id %}">Ver categoría</a>
                 </div>
             </div>
         {% endfor %}

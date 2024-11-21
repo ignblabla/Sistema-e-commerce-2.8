@@ -36,7 +36,7 @@
 <body>
 
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-	  <a class="navbar-brand" href="{% url 'store' %}">Ecom</a>
+	  <a class="navbar-brand" href="{% url 'store' %}">EDB</a>
 	  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 	    <span class="navbar-toggler-icon"></span>
 	  </button>
@@ -44,8 +44,13 @@
 	  <div class="collapse navbar-collapse" id="navbarSupportedContent">
 	    <ul class="navbar-nav mr-auto">
 	      <li class="nav-item active">
-	        <a class="nav-link" href="{% url 'store' %}">Store <span class="sr-only">(current)</span></a>
+	        <a class="nav-link" href="{% url 'categories' %}">Categorías <span class="sr-only">(current)</span></a>
 	      </li>
+		  
+		  <form class="form-inline" method="GET" action="{% url 'search_products' %}">
+			<input class="form-control mr-sm-2" type="search" placeholder="Buscar productos" aria-label="Buscar" name="q">
+			<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
+		  </form>
 	 
 	    </ul>
 	    <div class="form-inline my-2 my-lg-0">
