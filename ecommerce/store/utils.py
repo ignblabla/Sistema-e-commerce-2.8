@@ -1,4 +1,5 @@
-import json
+import json, random, string
+from django.contrib.auth.models import User
 from .models import *
 
 def cookieCart(request):
@@ -52,32 +53,33 @@ def cartData(request):
 
 	return {'cartItems':cartItems ,'order':order, 'items':items}
 
+def generate_unique_username(base="guest"):
+    """Genera un nombre de usuario único basado en un prefijo."""
+    while True:
+        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        username = f"{base}_{random_suffix}"
+        if not User.objects.filter(username=username).exists():
+            return username
+
 def guestOrder(request, data):
-	print('User is not logged in')
+    print('User is not logged in')
 
-	print('COOKIES:', request.COOKIES)
-	name = data['form']['name']
-	email = data['form']['email']
+    name = data['form']['name']
+    email = data['form']['email']
 
-	cookieData = cookieCart(request)
-	items = cookieData['items']
+    # Generar un nombre de usuario único para el usuario invitado
+    username = generate_unique_username()
 
-	user, created = User.objects.get_or_create(
-			email=email,
-			)
-	user.name = name
-	user.save()
+    # Crear o recuperar un usuario con ese nombre único
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={'email': email, 'first_name': name}
+    )
 
-	order = Order.objects.create(
-		user=user,
-		complete=False,
-		)
+    # Crear la orden para el usuario invitado
+    order = Order.objects.create(
+        user=user,
+        complete=False,
+    )
 
-	for item in items:
-		product = Product.objects.get(id=item['id'])
-		orderItem = OrderItem.objects.create(
-			product=product,
-			order=order,
-			quantity=item['quantity'],
-		)
-	return user, order
+    return user, order
