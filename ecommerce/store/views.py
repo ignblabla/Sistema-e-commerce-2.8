@@ -151,6 +151,7 @@ def product_details(request, product_id):
     }
 
 	return render(request,'store/product_details.html', context)
+
 @login_required
 def list_orders(request):
     user = request.user
@@ -159,8 +160,6 @@ def list_orders(request):
         'orders': orders
     }
     return render(request, 'store/my_orders.html', context)
-
-
 
 def view_order(request, order_id):
     try:
