@@ -8,50 +8,38 @@ from .forms import CustomUserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .utils import cookieCart, cartData, guestOrder
 
 def store(request):
-	if request.user.is_authenticated:
-		customer = request.user
-		order, created = Order.objects.get_or_create(user=customer, complete=False)
-		items = order.orderitem_set.all()
-		cartItems = order.get_cart_items
-	else:
-		items = []
-		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
-		cartItems = order['get_cart_items']
+	data = cartData(request)
+	cartItems = data['cartItems']
 
 	products = Product.objects.all()
 	context = {'products':products, 'cartItems':cartItems}
 	return render(request, 'store/store.html', context)
 
-def cart(request):
 
-	if request.user.is_authenticated:
-		customer = request.user
-		order, created = Order.objects.get_or_create(user=customer, complete=False)
-		items = order.orderitem_set.all()
-		cartItems = order.get_cart_items
-	else:
-		items = []
-		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
-		cartItems = order['get_cart_items']
+def cart(request):
+      
+	data = cartData(request)
+	cartItems = data['cartItems']
+	order = data['order']
+	items = data['items']
 
 	context = {'items':items, 'order':order, 'cartItems':cartItems}
 	return render(request, 'store/cart.html', context)
 
+
 def checkout(request):
-	if request.user.is_authenticated:
-		customer = request.user
-		order, created = Order.objects.get_or_create(user=customer, complete=False)
-		items = order.orderitem_set.all()
-		cartItems = order.get_cart_items
-	else:
-		items = []
-		order = {'get_cart_total':0, 'get_cart_items':0, 'shipping':False}
-		cartItems = order['get_cart_items']
+
+	data = cartData(request)
+	cartItems = data['cartItems']
+	order = data['order']
+	items = data['items']
 
 	context = {'items':items, 'order':order, 'cartItems':cartItems}
 	return render(request, 'store/checkout.html', context)
+
 
 def updateItem(request):
     data = json.loads(request.body)
@@ -81,24 +69,25 @@ def processOrder(request):
 	if request.user.is_authenticated:
 		user = request.user
 		order, created = Order.objects.get_or_create(user=user, complete=False)
-		total = float(data['form']['total'])
-		order.transaction_id = transaction_id
-
-		if total == order.get_cart_total:
-			order.complete = True
-		order.save()
-
-		if order.shipping == True:
-			ShippingAddress.objects.create(
-			user=user,
-			order=order,
-			address=data['shipping']['address'],
-			city=data['shipping']['city'],
-			state=data['shipping']['state'],
-			zipcode=data['shipping']['zipcode'],
-			)
 	else:
-		print('User is not logged in')
+		user, order = guestOrder(request, data)
+
+	total = float(data['form']['total'])
+	order.transaction_id = transaction_id
+
+	if total == order.get_cart_total:
+		order.complete = True
+	order.save()
+
+	if order.shipping == True:
+		ShippingAddress.objects.create(
+		user=user,
+		order=order,
+		address=data['shipping']['address'],
+		city=data['shipping']['city'],
+		state=data['shipping']['state'],
+		zipcode=data['shipping']['zipcode'],
+		)
 
 	return JsonResponse('Payment submitted..', safe=False)
 
@@ -109,6 +98,7 @@ def categories(request):
 
     context = {'categories': categories}
     return render(request, 'store/categories.html', context)
+
 
 def registro(request):
     data = {
@@ -124,6 +114,7 @@ def registro(request):
             return redirect(to="store")
         data["form"] = formulario
     return render(request, 'registration/registro.html', data)
+
 
 def products_by_category(request, category_id):
     category = get_object_or_404(Category, id=category_id)
@@ -143,6 +134,7 @@ def products_by_category(request, category_id):
     }
     return render(request, 'store/products_by_category.html', context)
 
+
 def product_details(request, product_id):
 	product= get_object_or_404(Product, id=product_id)
     
@@ -152,6 +144,7 @@ def product_details(request, product_id):
 
 	return render(request,'store/product_details.html', context)
 
+
 @login_required
 def list_orders(request):
     user = request.user
@@ -160,6 +153,7 @@ def list_orders(request):
         'orders': orders
     }
     return render(request, 'store/my_orders.html', context)
+
 
 def view_order(request, order_id):
     try:
@@ -177,6 +171,7 @@ def view_order(request, order_id):
     }
     
     return render(request, 'store/order.html', context)
+
 
 def check_order_exists(request, order_id):
     try:

@@ -16,7 +16,7 @@
 					
 					<div id="shipping-info">
 						<hr>
-						<p>Shipping Information:</p>
+						<p>Información de envío:</p>
 						<hr>
 						<div class="form-field">
 							<input class="form-control" type="text" name="address" placeholder="Dirección..">
@@ -58,12 +58,12 @@
 				<div class="cart-row">
 					<div style="flex:2"><img class="row-image" src="{{item.product.imageURL}}"></div>
 					<div style="flex:2"><p>{{item.product.name}}</p></div>
-					<div style="flex:1"><p>${{item.product.price|floatformat:2}}</p></div>
+					<div style="flex:1"><p>{{item.product.price|floatformat:2}}€</p></div>
 					<div style="flex:1"><p>x{{item.quantity}}</p></div>
 				</div>
 				{% endfor %}
-				<h5>Items:   {{order.get_cart_items}}</h5>
-				<h5>Total:   ${{order.get_cart_total|floatformat:2}}</h5>
+				<h5>Artículos:   {{order.get_cart_items}}</h5>
+				<h5>Total:   {{order.get_cart_total|floatformat:2}}€</h5>
 			</div>
 		</div>
 	</div>
@@ -72,11 +72,11 @@
 		var shipping = '{{order.shipping}}'
 		var total = '{{order.get_cart_total|floatformat:2}}'
 
-		if (shipping == 'False'){
+		{% comment %} if (shipping == 'False'){
 		 	document.getElementById('shipping-info').innerHTML = ''
-		}
+		} {% endcomment %}
 
-		if (user != 'AnonymousUser'){
+		{% comment %} if (user != 'AnonymousUser'){
 		 	document.getElementById('user-info').innerHTML = ''
 		 }
 
@@ -85,7 +85,7 @@
 				document.getElementById('form-wrapper').classList.add("hidden");
 				//Show payment if logged in user wants to buy an item that does not require shipping
 			    document.getElementById('payment-info').classList.remove("hidden");
-		}
+		} {% endcomment %}
 
 		var form = document.getElementById('form')
 		form.addEventListener('submit', function(e){
@@ -143,7 +143,11 @@
 	    	.then((response) => response.json())
 	    	.then((data) => {
 				  console.log('Success:', data);
-				  alert('Transaction completed');  
+				  alert('Transaction completed');
+
+				  cart = {}
+				  document.cookie ='cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
 				  window.location.href = "{% url 'store' %}"
 
 				})
