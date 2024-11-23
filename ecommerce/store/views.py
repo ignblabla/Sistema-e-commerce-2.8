@@ -48,48 +48,34 @@ def updateItem(request):
 
     order, created = Order.objects.get_or_create(user=request.user, complete=False)
     product = Product.objects.get(id=productId)
-    order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
 
     if action == 'add':
-        order_item.quantity += 1
-    elif action == 'remove':
-        order_item.quantity -= 1
-    order_item.save()
+        if product.stock > 0:
+            order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
 
-    if order_item.quantity <= 0:
-        order_item.delete()
+            order_item.quantity += 1
+            order_item.save()
+
+            product.stock -= 1
+            product.save()
+
+        else:
+            return JsonResponse({'error': 'No hay suficiente stock disponible'}, status=400)
+
+    elif action == 'remove':
+        order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
+
+        order_item.quantity -= 1
+        order_item.save()
+
+        if order_item.quantity <= 0:
+            order_item.delete()
+
+        product.stock += 1
+        product.save()
 
     cartItems = order.get_cart_items
     return JsonResponse({'cartItems': cartItems}, safe=False)
-
-# def processOrder(request):
-# 	transaction_id = datetime.datetime.now().timestamp()
-# 	data = json.loads(request.body)
-
-# 	if request.user.is_authenticated:
-# 		user = request.user
-# 		order, created = Order.objects.get_or_create(user=user, complete=False)
-# 	else:
-# 		user, order = guestOrder(request, data)
-
-# 	total = float(data['form']['total'])
-# 	order.transaction_id = transaction_id
-
-# 	if total == order.get_cart_total:
-# 		order.complete = True
-# 	order.save()
-
-# 	if order.shipping == True:
-# 		ShippingAddress.objects.create(
-# 		user=user,
-# 		order=order,
-# 		address=data['shipping']['address'],
-# 		city=data['shipping']['city'],
-# 		state=data['shipping']['state'],
-# 		zipcode=data['shipping']['zipcode'],
-# 		)
-
-# 	return JsonResponse('Payment submitted..', safe=False)
 
 def processOrder(request):
     transaction_id = datetime.datetime.now().timestamp()
@@ -106,26 +92,23 @@ def processOrder(request):
 
     if total == order.get_cart_total:
         order.complete = True
+        # Reducir el stock de los productos en el carrito
+        for item in order.orderitem_set.all():
+            product = item.product
+            product.stock -= item.quantity
+            product.save()
     order.save()
 
     if order.shipping:
-        shipping_data = data.get('shipping', {})  # Obtén el diccionario 'shipping' o un diccionario vacío
-        address = shipping_data.get('address', '')  # Devuelve un string vacío si no existe
+        shipping_data = data.get('shipping', {})
+        address = shipping_data.get('address', '')
         city = shipping_data.get('city', '')
         state = shipping_data.get('state', '')
         zipcode = shipping_data.get('zipcode', '')
 
-        # Limpia los valores (elimina espacios al inicio y al final)
-        address = address
-        city = city
-        state = state
-        zipcode = zipcode
-
-        # Validar que los datos requeridos no estén vacíos
         if not address or not city or not state or not zipcode:
             return JsonResponse({'error': 'Faltan datos de envío'}, status=400)
 
-        # Crear el objeto ShippingAddress
         ShippingAddress.objects.create(
             user=user,
             order=order,
