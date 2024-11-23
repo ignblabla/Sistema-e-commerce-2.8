@@ -20,15 +20,68 @@
     <div class="row">
         {% for product in products %}
             <div class="col-lg-4">
-                <img class="thumbnail" src="{{product.imageURL}}">
+                <img class="thumbnail" src="{{ product.imageURL }}">
                 <div class="box-element product">
-                    <h6><strong>{{product.name}}</strong></h6>
+                    <h6><strong>{{ product.name }}</strong></h6>
                     <hr>
-                    <button data-product={{product.id}} data-action="add" class="btn btn-outline-secondary add-btn update-cart">Añadir</button>
+                    <button data-product="{{ product.id }}" data-action="add" class="btn btn-outline-secondary add-btn update-cart">
+                        Añadir
+                    </button>
                     <a class="btn btn-outline-success" href="{% url 'product_details' product.id %}">Ver</a>
-                    <h4 style="display: inline-block; float: right"><strong>{{product.price}}€</strong></h4>
+                    <h4 style="display: inline-block; float: right"><strong>{{ product.price }}€</strong></h4>
+                    <p>Stock: <span class="stock-{{ product.id }}">{{ product.stock }}</span> unidades</p>
                 </div>
             </div>
         {% endfor %}
     </div>
+
 {% endblock content %}
+
+<script>
+    document.querySelectorAll('.update-cart').forEach(button => {
+        button.addEventListener('click', function () {
+            const productId = this.getAttribute('data-product');
+            const action = this.getAttribute('data-action');
+            const stockElement = document.querySelector(`.stock-${productId}`);
+            const errorElement = document.querySelector(`#error-${productId}`);
+    
+            fetch('/update_item/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    'productId': productId,
+                    'action': action
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.cartItems) {
+                    const currentStock = parseInt(stockElement.innerText);
+                    const newStock = currentStock - 1;
+    
+                    if (newStock >= 0) {
+                        stockElement.innerText = newStock;
+                    }
+    
+                    if (data.out_of_stock) {
+                        alert('Este producto se ha quedado sin stock.');
+                        this.disabled = true;
+                        this.innerText = 'Sin stock';
+                    }
+    
+                    document.querySelector('.cart-total').innerText = data.cartTotal;
+                }
+    
+                if (data.error) {
+                    errorElement.innerText = data.error;
+                    errorElement.style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+    
+</script>
