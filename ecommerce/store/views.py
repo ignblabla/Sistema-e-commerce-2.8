@@ -62,34 +62,80 @@ def updateItem(request):
     cartItems = order.get_cart_items
     return JsonResponse({'cartItems': cartItems}, safe=False)
 
+# def processOrder(request):
+# 	transaction_id = datetime.datetime.now().timestamp()
+# 	data = json.loads(request.body)
+
+# 	if request.user.is_authenticated:
+# 		user = request.user
+# 		order, created = Order.objects.get_or_create(user=user, complete=False)
+# 	else:
+# 		user, order = guestOrder(request, data)
+
+# 	total = float(data['form']['total'])
+# 	order.transaction_id = transaction_id
+
+# 	if total == order.get_cart_total:
+# 		order.complete = True
+# 	order.save()
+
+# 	if order.shipping == True:
+# 		ShippingAddress.objects.create(
+# 		user=user,
+# 		order=order,
+# 		address=data['shipping']['address'],
+# 		city=data['shipping']['city'],
+# 		state=data['shipping']['state'],
+# 		zipcode=data['shipping']['zipcode'],
+# 		)
+
+# 	return JsonResponse('Payment submitted..', safe=False)
+
 def processOrder(request):
-	transaction_id = datetime.datetime.now().timestamp()
-	data = json.loads(request.body)
+    transaction_id = datetime.datetime.now().timestamp()
+    data = json.loads(request.body)
 
-	if request.user.is_authenticated:
-		user = request.user
-		order, created = Order.objects.get_or_create(user=user, complete=False)
-	else:
-		user, order = guestOrder(request, data)
+    if request.user.is_authenticated:
+        user = request.user
+        order, created = Order.objects.get_or_create(user=user, complete=False)
+    else:
+        user, order = guestOrder(request, data)
 
-	total = float(data['form']['total'])
-	order.transaction_id = transaction_id
+    total = float(data['form']['total'])
+    order.transaction_id = transaction_id
 
-	if total == order.get_cart_total:
-		order.complete = True
-	order.save()
+    if total == order.get_cart_total:
+        order.complete = True
+    order.save()
 
-	if order.shipping == True:
-		ShippingAddress.objects.create(
-		user=user,
-		order=order,
-		address=data['shipping']['address'],
-		city=data['shipping']['city'],
-		state=data['shipping']['state'],
-		zipcode=data['shipping']['zipcode'],
-		)
+    if order.shipping:
+        shipping_data = data.get('shipping', {})  # Obtén el diccionario 'shipping' o un diccionario vacío
+        address = shipping_data.get('address', '')  # Devuelve un string vacío si no existe
+        city = shipping_data.get('city', '')
+        state = shipping_data.get('state', '')
+        zipcode = shipping_data.get('zipcode', '')
 
-	return JsonResponse('Payment submitted..', safe=False)
+        # Limpia los valores (elimina espacios al inicio y al final)
+        address = address
+        city = city
+        state = state
+        zipcode = zipcode
+
+        # Validar que los datos requeridos no estén vacíos
+        if not address or not city or not state or not zipcode:
+            return JsonResponse({'error': 'Faltan datos de envío'}, status=400)
+
+        # Crear el objeto ShippingAddress
+        ShippingAddress.objects.create(
+            user=user,
+            order=order,
+            address=address,
+            city=city,
+            state=state,
+            zipcode=zipcode,
+        )
+
+    return JsonResponse('Payment submitted..', safe=False)
 
 def categories(request):
     categories = Category.objects.all()

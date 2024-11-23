@@ -61,6 +61,29 @@ def generate_unique_username(base="guest"):
         if not User.objects.filter(username=username).exists():
             return username
 
+# def guestOrder(request, data):
+#     print('User is not logged in')
+
+#     name = data['form']['name']
+#     email = data['form']['email']
+
+#     # Generar un nombre de usuario único para el usuario invitado
+#     username = generate_unique_username()
+
+#     # Crear o recuperar un usuario con ese nombre único
+#     user, created = User.objects.get_or_create(
+#         username=username,
+#         defaults={'email': email, 'first_name': name}
+#     )
+
+#     # Crear la orden para el usuario invitado
+#     order = Order.objects.create(
+#         user=user,
+#         complete=False,
+#     )
+
+#     return user, order
+
 def guestOrder(request, data):
     print('User is not logged in')
 
@@ -81,5 +104,18 @@ def guestOrder(request, data):
         user=user,
         complete=False,
     )
+
+    # Obtener los productos del carrito de las cookies
+    cookieData = cookieCart(request)
+    items = cookieData['items']
+
+    # Crear OrderItem para cada producto en el carrito
+    for item in items:
+        product = Product.objects.get(id=item['id'])
+        OrderItem.objects.create(
+            product=product,
+            order=order,
+            quantity=item['quantity'],
+        )
 
     return user, order
