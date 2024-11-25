@@ -9,6 +9,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .utils import cookieCart, cartData, guestOrder
+from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
 
 def store(request):
     data = cartData(request)
@@ -39,7 +41,6 @@ def checkout(request):
     return render(request, 'store/checkout.html', context)
 
 
-
 def updateItem(request):
 	data = json.loads(request.body)
 	productId = data['productId']
@@ -65,7 +66,6 @@ def updateItem(request):
 
 	return JsonResponse('Item was added', safe=False)
 
-from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def processOrder(request):
@@ -75,13 +75,6 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        total = float(data['form']['total'])
-        order.transaction_id = transaction_id
-
-        if total == order.get_cart_total:
-            order.complete = True
-        order.save()
-
     else:
         customer, order = guestOrder(request, data)
 
@@ -102,7 +95,21 @@ def processOrder(request):
             zipcode=data['shipping']['zipcode'],
         )
 
-    return JsonResponse('Payment submitted..', safe=False)
+    # Enviar correo electrónico con el resumen del pedido
+    subject = 'Resumen de tu pedido'
+    message = f'Gracias por tu compra. Aquí tienes el resumen de tu pedido:\n\n'
+    message += f'ID de transacción: {order.transaction_id}\n'
+    message += f'Total: {order.get_cart_total}\n'
+    message += f'Dirección de envío: {data["shipping"]["address"]}, {data["shipping"]["city"]}, {data["shipping"]["state"]}, {data["shipping"]["zipcode"]}\n'
+
+    if request.user.is_authenticated:
+        recipient_list = [customer.user.email]
+    else:
+        recipient_list = [data['form']['email']]
+
+    send_mail(subject, message, 'ecom.resumen_pedido@outlook.com', recipient_list)
+
+    return JsonResponse('Pago completado', safe=False)
 
 
 def categories(request):
