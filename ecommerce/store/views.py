@@ -75,9 +75,15 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        total = float(data['form']['total'])
+        order.transaction_id = transaction_id
+
+        if total == order.get_cart_total:
+            order.complete = True
+        order.save()
 
     else:
-         customer, order = guestOrder(request, data)
+        customer, order = guestOrder(request, data)
 
     total = float(data['form']['total'])
     order.transaction_id = transaction_id
@@ -97,6 +103,7 @@ def processOrder(request):
         )
 
     return JsonResponse('Payment submitted..', safe=False)
+
 
 def categories(request):
     categories = Category.objects.all()
@@ -167,16 +174,6 @@ def product_details(request, product_id):
     }
 
 	return render(request,'store/product_details.html', context)
-
-
-# @login_required
-# def list_orders(request):
-#     user = request.user
-#     orders = Order.objects.filter(user=user)
-#     context = {
-#         'orders': orders
-#     }
-#     return render(request, 'store/my_orders.html', context)
 
 @login_required
 def list_orders(request):
