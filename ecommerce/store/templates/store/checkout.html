@@ -72,11 +72,11 @@
 		var shipping = '{{order.shipping}}'
 		var total = '{{order.get_cart_total|floatformat:2}}'
 
-		{% comment %} if (shipping == 'False'){
+		if (shipping == 'False'){
 		 	document.getElementById('shipping-info').innerHTML = ''
-		} {% endcomment %}
+		}
 
-		{% comment %} if (user != 'AnonymousUser'){
+		if (user != 'AnonymousUser'){
 		 	document.getElementById('user-info').innerHTML = ''
 		 }
 
@@ -85,7 +85,7 @@
 				document.getElementById('form-wrapper').classList.add("hidden");
 				//Show payment if logged in user wants to buy an item that does not require shipping
 			    document.getElementById('payment-info').classList.remove("hidden");
-		} {% endcomment %}
+		}
 
 		var form = document.getElementById('form')
 		form.addEventListener('submit', function(e){

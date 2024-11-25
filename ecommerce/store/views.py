@@ -11,111 +11,89 @@ from django.contrib.auth.decorators import login_required
 from .utils import cookieCart, cartData, guestOrder
 
 def store(request):
-	data = cartData(request)
-	cartItems = data['cartItems']
+    data = cartData(request)
+    cartItems = data['cartItems']
 
-	products = Product.objects.all()
-	context = {'products':products, 'cartItems':cartItems}
-	return render(request, 'store/store.html', context)
+    products = Product.objects.all()
+    context = {'products': products, 'cartItems': cartItems}
+    return render(request, 'store/store.html', context)
 
 
 def cart(request):
-      
-	data = cartData(request)
-	cartItems = data['cartItems']
-	order = data['order']
-	items = data['items']
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
 
-	context = {'items':items, 'order':order, 'cartItems':cartItems}
-	return render(request, 'store/cart.html', context)
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
+    return render(request, 'store/cart.html', context)
 
 
 def checkout(request):
+    data = cartData(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
 
-	data = cartData(request)
-	cartItems = data['cartItems']
-	order = data['order']
-	items = data['items']
+    context = {'items': items, 'order': order, 'cartItems': cartItems}
+    return render(request, 'store/checkout.html', context)
 
-	context = {'items':items, 'order':order, 'cartItems':cartItems}
-	return render(request, 'store/checkout.html', context)
 
 
 def updateItem(request):
-    data = json.loads(request.body)
-    productId = data['productId']
-    action = data['action']
+	data = json.loads(request.body)
+	productId = data['productId']
+	action = data['action']
+	print('Action:', action)
+	print('Product:', productId)
 
-    order, created = Order.objects.get_or_create(user=request.user, complete=False)
-    product = Product.objects.get(id=productId)
+	customer = request.user.customer
+	product = Product.objects.get(id=productId)
+	order, created = Order.objects.get_or_create(customer=customer, complete=False)
 
-    if action == 'add':
-        if product.stock > 0:
-            order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
+	orderItem, created = OrderItem.objects.get_or_create(order=order, product=product)
 
-            order_item.quantity += 1
-            order_item.save()
+	if action == 'add':
+		orderItem.quantity = (orderItem.quantity + 1)
+	elif action == 'remove':
+		orderItem.quantity = (orderItem.quantity - 1)
 
-            product.stock -= 1
-            product.save()
+	orderItem.save()
 
-        else:
-            return JsonResponse({'error': 'No hay suficiente stock disponible'}, status=400)
+	if orderItem.quantity <= 0:
+		orderItem.delete()
 
-    elif action == 'remove':
-        order_item, created = OrderItem.objects.get_or_create(order=order, product=product)
+	return JsonResponse('Item was added', safe=False)
 
-        order_item.quantity -= 1
-        order_item.save()
+from django.views.decorators.csrf import csrf_exempt
 
-        if order_item.quantity <= 0:
-            order_item.delete()
-
-        product.stock += 1
-        product.save()
-
-    cartItems = order.get_cart_items
-    return JsonResponse({'cartItems': cartItems}, safe=False)
-
+@csrf_exempt
 def processOrder(request):
     transaction_id = datetime.datetime.now().timestamp()
     data = json.loads(request.body)
 
     if request.user.is_authenticated:
-        user = request.user
-        order, created = Order.objects.get_or_create(user=user, complete=False)
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+
     else:
-        user, order = guestOrder(request, data)
+         customer, order = guestOrder(request, data)
 
     total = float(data['form']['total'])
     order.transaction_id = transaction_id
 
     if total == order.get_cart_total:
         order.complete = True
-        # Reducir el stock de los productos en el carrito
-        for item in order.orderitem_set.all():
-            product = item.product
-            product.stock -= item.quantity
-            product.save()
     order.save()
 
-    if order.shipping:
-        shipping_data = data.get('shipping', {})
-        address = shipping_data.get('address', '')
-        city = shipping_data.get('city', '')
-        state = shipping_data.get('state', '')
-        zipcode = shipping_data.get('zipcode', '')
-
-        if not address or not city or not state or not zipcode:
-            return JsonResponse({'error': 'Faltan datos de envío'}, status=400)
-
+    if order.shipping == True:
         ShippingAddress.objects.create(
-            user=user,
+            customer=customer,
             order=order,
-            address=address,
-            city=city,
-            state=state,
-            zipcode=zipcode,
+            address=data['shipping']['address'],
+            city=data['shipping']['city'],
+            state=data['shipping']['state'],
+            zipcode=data['shipping']['zipcode'],
         )
 
     return JsonResponse('Payment submitted..', safe=False)
@@ -129,20 +107,37 @@ def categories(request):
     return render(request, 'store/categories.html', context)
 
 
+# def registro(request):
+#     data = {
+# 		'form': CustomUserCreationForm()
+# 	}
+#     if request.method == 'POST':
+#         formulario = CustomUserCreationForm(data=request.POST)
+#         if formulario.is_valid():
+#             formulario.save()
+#             user = authenticate(username=formulario.cleaned_data["username"], password=formulario.cleaned_data["password1"])
+#             login(request, user)
+#             messages.success(request, "Te has registrado correctamente")
+#             return redirect(to="store")
+#         data["form"] = formulario
+#     return render(request, 'registration/registro.html', data)
+
 def registro(request):
-    data = {
-		'form': CustomUserCreationForm()
-	}
     if request.method == 'POST':
-        formulario = CustomUserCreationForm(data=request.POST)
-        if formulario.is_valid():
-            formulario.save()
-            user = authenticate(username=formulario.cleaned_data["username"], password=formulario.cleaned_data["password1"])
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            name = form.cleaned_data.get('username')  # Assuming the username is used as name for the Customer
+            email = form.cleaned_data.get('email')  # Ensure email field exists in UserCreationForm or handle separately
+            customer = Customer.objects.create(user=user, name=name, email=email)
             login(request, user)
             messages.success(request, "Te has registrado correctamente")
-            return redirect(to="store")
-        data["form"] = formulario
-    return render(request, 'registration/registro.html', data)
+            return redirect('store')
+    else:
+        form = CustomUserCreationForm()
+    
+    context = {'form': form}
+    return render(request, 'registration/registro.html', context)
 
 
 def products_by_category(request, category_id):
@@ -174,10 +169,22 @@ def product_details(request, product_id):
 	return render(request,'store/product_details.html', context)
 
 
+# @login_required
+# def list_orders(request):
+#     user = request.user
+#     orders = Order.objects.filter(user=user)
+#     context = {
+#         'orders': orders
+#     }
+#     return render(request, 'store/my_orders.html', context)
+
 @login_required
 def list_orders(request):
     user = request.user
-    orders = Order.objects.filter(user=user)
+    # Obtener o crear el Customer asociado con el usuario
+    customer = Customer.objects.get(user=user)
+    # Obtener las órdenes asociadas al cliente
+    orders = Order.objects.filter(customer=customer)
     context = {
         'orders': orders
     }
