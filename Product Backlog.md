@@ -17,6 +17,7 @@
 |---------|-------------|-------------------------------|
 | 1.0     | 13/11/2024  | Inicialización del documento    |
 
+## Product Backlog
 | **ID**   | **Descripción del Item (PBI)**                                                                               | **Prioridad** | **Criterio de Aceptación**                                                                                   |
 |----------|-------------------------------------------------------------------------------------------------------------|---------------|------------------------------------------------------------------------------------------------------------|
 | PBI-01   | Visualización constante de la cesta de compra (excepto durante la tramitación).                              | Should Have   | La cesta de compra es visible en todas las pantallas, salvo en las de tramitación, y muestra los elementos actuales. |
